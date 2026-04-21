@@ -12,7 +12,37 @@ POSTS = [
     {"id": 2, "title": "Second post", "content": "This is the second post."},
 ]
 
+# -------------------
+# Helper Functions
+# -------------------
 
+def validate_blogpost_data(data):
+    """
+    Validates the blogpost data.
+
+    :param data: data to validate.
+    """
+    if "title" not in data or "content" not in data:
+        return False
+    if data["title"] == "" or data["content"] == "":
+        return False
+    return True
+
+def get_post_by_id(post_id) -> Tuple[int, Dict] | Tuple[None, None]:
+    """
+    Gets the post by the id.
+
+    :param post_id: id to search for in the list of blogposts.
+    :return: Returns the post index in the blog_posts list and the post dictionary.
+
+
+    """
+    for i, post in enumerate(POSTS):
+        if post["id"] == post_id:
+            return i, post
+    return None, None
+
+# -------------------
 # Error Handling
 # -------------------
 
@@ -25,17 +55,12 @@ def not_found_error(error):
 def method_not_allowed_error(error):
     return jsonify({"error": "Method Not Allowed"}), 405
 
+# -------------------
+# Routes
+# -------------------
 @app.route('/api/posts', methods=['GET'])
 def get_posts():
     return jsonify(POSTS)
-
-
-def validate_blogpost_data(data):
-    if "title" not in data or "content" not in data:
-        return False
-    if data["title"] == "" or data["content"] == "":
-        return False
-    return True
 
 @app.route('/api/posts', methods=['GET', 'POST'])
 def add():
@@ -61,20 +86,6 @@ def add():
         return jsonify(POSTS)
 
 
-def get_post_by_id(post_id) -> Tuple[int, Dict] | Tuple[None, None]:
-    """
-    Gets the post by the id.
-    :param post_id: id to search for in the list of blogposts.
-    :return: Returns the post index in the blog_posts list and the post dictionary.
-
-
-    """
-    for i, post in enumerate(POSTS):
-        if post["id"] == post_id:
-            return i, post
-    return None, None
-
-
 @app.route('/api/posts/<int:id>', methods=['DELETE'])
 def delete_post(id):
     # Find the post with the given ID
@@ -82,11 +93,24 @@ def delete_post(id):
 
     # If the book wasn't found, return a 404 error
     if post is None:
-        return '', 404
+        return f'Post with id {id} Not Found', 404
 
     # Remove the post from the list
     POSTS.remove(post)
     return jsonify({"message": f"Post with id {id} has been deleted successfully."})
+
+@app.route('/api/posts/<int:id>', methods=['PUT'])
+def update_post(id):
+    i, post = get_post_by_id(id)
+    if post is None:
+        return f'Post with id {id} Not Found', 404
+
+    new_data = request.get_json()
+    post["title"] = new_data.get("title", post["title"])
+    post["content"] = new_data.get("content", post["content"])
+
+    return jsonify(post), 200
+
 
 if __name__ == '__main__':
     app.run(host="0.0.0.0", port=5002, debug=True)
