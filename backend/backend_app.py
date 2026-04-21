@@ -3,9 +3,36 @@ from typing import Tuple, Dict, List
 from flask import Flask, jsonify
 from flask_cors import CORS
 from flask import request
+from flask_swagger_ui import get_swaggerui_blueprint
+
+# -------------------
+# Flask Setup
+# -------------------
 
 app = Flask(__name__)
 CORS(app)  # This will enable CORS for all routes
+
+
+# -------------------
+# Setup Swagger
+# -------------------
+
+SWAGGER_URL="/api/docs"
+API_URL="/static/masterblog.json"
+
+swagger_ui_blueprint = get_swaggerui_blueprint(
+    SWAGGER_URL,
+    API_URL,
+    config={
+        'app_name': 'Masterblog API'
+    }
+)
+
+app.register_blueprint(swagger_ui_blueprint, url_prefix=SWAGGER_URL)
+
+# -------------------
+# GLOBALS
+# -------------------
 
 POSTS = [
     {
@@ -106,7 +133,7 @@ def get_posts():
 
     return jsonify(paginated_posts)
 
-@app.route('/api/posts', methods=['GET', 'POST'])
+@app.route('/api/posts', methods=['POST'])
 def add():
     if request.method == 'POST':
         # Get the new blogpost data from the client
@@ -125,9 +152,6 @@ def add():
 
         # Return the new post data to the client
         return jsonify(new_blogpost), 201
-    else:
-        # Handle the GET request
-        return jsonify(POSTS)
 
 
 @app.route('/api/posts/<int:id>', methods=['DELETE'])
@@ -157,6 +181,12 @@ def update_post(id):
 
 @app.route('/api/posts/search', methods=['GET'])
 def search_posts():
+    # initialize pagination
+    page = int(request.args.get('page', 1))
+    limit = int(request.args.get('limit', 10))
+    start_index = (page - 1) * limit
+    end_index = start_index + limit
+
     title = request.args.get('title')
     content = request.args.get('content')
 
@@ -164,9 +194,10 @@ def search_posts():
     if title:
         search_results += [post for post in POSTS if (post not in search_results) and (title in post.get('title'))]
     if content:
-        search_results += [post for post in POSTS if (post not in search_results) and (title in post.get('content'))]
+        search_results += [post for post in POSTS if (post not in search_results) and (content in post.get('content'))]
 
-    return jsonify(search_results)
+    paginated_search_results = search_results[start_index:end_index]
+    return jsonify(paginated_search_results)
 
 
 

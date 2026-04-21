@@ -1,0 +1,213 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "Masterblog API",
+    "version": "1.0.0"
+  },
+  "servers": [{ "url": "http://localhost:5002" }],
+  "tags": [{ "name": "Post", "description": "Post API - CRUD" }],
+
+    "paths": {
+        "/api/posts": {
+            "get": {
+                "summary": "Returns all posts. The default return is paginated in 10 results per page. Sorting is optional",
+                "produces": ["application/json"],
+                "tags": ["Post"],
+                "parameters" : [
+                    {
+                      "name": "page",
+                      "in": "query",
+                      "type": "integer",
+                      "required": false,
+                      "default": 1,
+                      "description": "Page number (starts from 1)"
+                    },
+                    {
+                      "name": "limit",
+                      "in": "query",
+                      "type": "integer",
+                      "required": false,
+                      "default": 10,
+                      "description": "Number of posts per page"
+                    },
+                    {
+                      "name": "sort",
+                      "in": "query",
+                      "type": "string",
+                      "required": false,
+                      "enum": ["title", "content"],
+                      "description": "Field to sort by"
+                    },
+                    {
+                      "name": "direction",
+                      "in": "query",
+                      "type": "string",
+                      "required": false,
+                      "enum": ["asc", "desc"],
+                      "description": "Sort direction"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                      "description": "Successful operation"
+                    }
+                }
+            },
+            "post": {
+                  "summary": "Creates a new post",
+                  "produces": ["application/json"],
+                  "tags": ["Post"],
+                  "parameters": [
+                        {
+                          "in": "body",
+                          "name": "body",
+                          "required": true,
+                          "schema": {
+                            "type": "object",
+                            "required": ["title", "content"],
+                            "properties": {
+                              "title": {
+                                "type": "string",
+                                "example": "My first post"
+                              },
+                              "content": {
+                                "type": "string",
+                                "example": "This is the content of my post."
+                              }
+                            }
+                          }
+                        }
+                  ],
+                  "responses": {
+                      "201": {
+                        "description": "Successful operation"
+                      },
+                      "404" :{
+                        "description": "Error: Not Found"
+                      },
+                      "400" : {
+                        "description": "error: Invalid blogpost data, Title and/or content empty."
+                      }
+                  }
+            }
+        },
+      "/api/posts/{id}": {
+        "delete": {
+                "summary": "Deletes the post with the given id",
+                "produces": ["application/json"],
+                "tags": ["Post"],
+                "parameters": [
+                  {
+                    "name": "id",
+                    "in": "path",
+                    "required": true,
+                    "type": "integer",
+                    "description": "ID of the post to delete"
+                  }
+                ],
+                "responses": {
+                    "404": {
+                      "description": "Post with id {id} Not Found"
+                    },
+                    "200":  {
+                      "description": "Post with id {id} has been deleted successfully."
+                    }
+                }
+            },
+        "put": {
+            "summary": "Update an existing post",
+            "produces": ["application/json"],
+            "consumes": ["application/json"],
+            "tags": ["Post"],
+            "parameters": [
+              {
+                "name": "id",
+                "in": "path",
+                "required": true,
+                "type": "integer",
+                "description": "ID of the post to update"
+              },
+              {
+                "name": "body",
+                "in": "body",
+                "required": true,
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "title": {
+                      "type": "string",
+                      "example": "Updated title"
+                    },
+                    "content": {
+                      "type": "string",
+                      "example": "Updated content"
+                    }
+                  }
+                }
+              }
+            ],
+            "responses": {
+              "200": {
+                "description": "Post updated successfully",
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": { "type": "integer" },
+                    "title": { "type": "string" },
+                    "content": { "type": "string" }
+                  }
+                }
+              },
+              "404": {
+                "description": "Post not found"
+              },
+              "400": {
+                "description": "Invalid input"
+              }
+            }
+          }
+        },
+       "/api/posts/search": {
+            "get": {
+                "summary": "Returns all posts. The default return is paginated in 10 results per page. Sorting is optional",
+                "produces": ["application/json"],
+                "tags": ["Post"],
+                "parameters" : [
+                    {
+                      "name": "page",
+                      "in": "query",
+                      "type": "integer",
+                      "required": false,
+                      "default": 1,
+                      "description": "Page number (starts from 1)"
+                    },
+                    {
+                      "name": "limit",
+                      "in": "query",
+                      "type": "integer",
+                      "required": false,
+                      "default": 10,
+                      "description": "Number of posts per page"
+                    },
+                    {
+                      "name": "title",
+                      "in": "query",
+                      "type": "string",
+                      "required": false,
+                      "description": "Title to search by"
+                    },
+                    {
+                      "name": "content",
+                      "in": "query",
+                      "type": "string",
+                      "required": false,
+                      "description": "Content to search by"
+                    }
+                ],
+                "responses": {}
+            }
+        }
+    }
+
+
+}
