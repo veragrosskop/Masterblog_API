@@ -1,3 +1,5 @@
+from typing import Tuple, Dict
+
 from flask import Flask, jsonify
 from flask_cors import CORS
 from flask import request
@@ -58,6 +60,33 @@ def add():
         # Handle the GET request
         return jsonify(POSTS)
 
+
+def get_post_by_id(post_id) -> Tuple[int, Dict] | Tuple[None, None]:
+    """
+    Gets the post by the id.
+    :param post_id: id to search for in the list of blogposts.
+    :return: Returns the post index in the blog_posts list and the post dictionary.
+
+
+    """
+    for i, post in enumerate(POSTS):
+        if post["id"] == post_id:
+            return i, post
+    return None, None
+
+
+@app.route('/api/posts/<int:id>', methods=['DELETE'])
+def delete_post(id):
+    # Find the post with the given ID
+    _, post = get_post_by_id(id)
+
+    # If the book wasn't found, return a 404 error
+    if post is None:
+        return '', 404
+
+    # Remove the post from the list
+    POSTS.remove(post)
+    return jsonify({"message": f"Post with id {id} has been deleted successfully."})
 
 if __name__ == '__main__':
     app.run(host="0.0.0.0", port=5002, debug=True)
