@@ -1,4 +1,4 @@
-from typing import Tuple, Dict
+from typing import Tuple, Dict, List
 
 from flask import Flask, jsonify
 from flask_cors import CORS
@@ -8,8 +8,12 @@ app = Flask(__name__)
 CORS(app)  # This will enable CORS for all routes
 
 POSTS = [
-    {"id": 1, "title": "First post", "content": "This is the first post."},
-    {"id": 2, "title": "Second post", "content": "This is the second post."},
+    {
+        "id": i,
+        "title": f"Post {i}",
+        "content": f"Content for post {i}."
+    }
+    for i in range(1, 101)  # 100 posts
 ]
 
 # -------------------
@@ -42,6 +46,24 @@ def get_post_by_id(post_id) -> Tuple[int, Dict] | Tuple[None, None]:
             return i, post
     return None, None
 
+
+def sort_posts(sort, direction) -> List[Dict]:
+    """
+    Returns a sorted list of posts. Returns error code 400 when given invalid parameters.
+
+    :param sort: sort direction. Either "title" or "content".
+    :param direction: sort direction. Either "asc" or "desc".
+    """
+
+    if sort and direction == "asc":
+        return sorted(POSTS, key=lambda post: post[sort], reverse=False)
+    if sort and direction == "desc":
+        return sorted(POSTS, key=lambda post: post[sort], reverse=True)
+    if not sort and direction == "desc":
+        return list(reversed(POSTS))
+    else:
+        return POSTS
+
 # -------------------
 # Error Handling
 # -------------------
@@ -64,26 +86,25 @@ def method_not_allowed_error(error):
 # -------------------
 @app.route('/api/posts', methods=['GET'])
 def get_posts():
+
+    # initialize pagination
+    page = int(request.args.get('page', 1))
+    limit = int(request.args.get('limit', 10))
+    start_index = (page - 1) * limit
+    end_index = start_index + limit
+
+    # initialize sorting
     sort = request.args.get('sort')
     direction = request.args.get('direction')
+    if sort and sort not in {"title", "content"}:
+        return f'Bad Request: sort was given:{sort}, but allows only title or content', 400
+    if direction and direction not in {"asc", "desc"}:
+        return f'Bad Request: direction was given:{direction}, but allows only asc or desc', 400
 
-    descending = False
-    if direction:
-        if direction not in {"asc", "desc"}:
-            return f'Bad Request: direction was given:{direction}, but allows only asc or desc', 400
-        if direction == "asc":
-            descending = False
-        if direction == "desc":
-            descending = True
+    sorted_posts = sort_posts(sort, direction)
+    paginated_posts = sorted_posts[start_index:end_index]
 
-    if sort:
-        if sort not in {"title", "content"}:
-            return f'Bad Request: sort was given:{sort}, but allows only title or content', 400
-        elif sort in {"title", "content"}:
-            return jsonify(sorted(POSTS, key=lambda post: post[sort], reverse=descending))
-    if not sort and descending == True:
-        return jsonify(reversed(POSTS))
-    return jsonify(POSTS)
+    return jsonify(paginated_posts)
 
 @app.route('/api/posts', methods=['GET', 'POST'])
 def add():
