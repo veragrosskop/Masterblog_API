@@ -46,6 +46,10 @@ def get_post_by_id(post_id) -> Tuple[int, Dict] | Tuple[None, None]:
 # Error Handling
 # -------------------
 
+@app.errorhandler(400)
+def not_found_error(error):
+    return jsonify({"error": "Bad Request"}), 400
+
 @app.errorhandler(404)
 def not_found_error(error):
     return jsonify({"error": "Not Found"}), 404
@@ -60,6 +64,25 @@ def method_not_allowed_error(error):
 # -------------------
 @app.route('/api/posts', methods=['GET'])
 def get_posts():
+    sort = request.args.get('sort')
+    direction = request.args.get('direction')
+
+    descending = False
+    if direction:
+        if direction not in {"asc", "desc"}:
+            return f'Bad Request: direction was given:{direction}, but allows only asc or desc', 400
+        if direction == "asc":
+            descending = False
+        if direction == "desc":
+            descending = True
+
+    if sort:
+        if sort not in {"title", "content"}:
+            return f'Bad Request: sort was given:{sort}, but allows only title or content', 400
+        elif sort in {"title", "content"}:
+            return jsonify(sorted(POSTS, key=lambda post: post[sort], reverse=descending))
+    if not sort and descending == True:
+        return jsonify(reversed(POSTS))
     return jsonify(POSTS)
 
 @app.route('/api/posts', methods=['GET', 'POST'])
